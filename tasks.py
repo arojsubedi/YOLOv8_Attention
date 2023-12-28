@@ -56,7 +56,8 @@ from ultralytics.nn.modules import (
     LAWDS,
     SEAttention,
     RCSOSA,
-    FocalModulation
+    FocalModulation,
+    ECAAttention,
 )
 from ultralytics.utils import (
     DEFAULT_CFG_DICT,
@@ -954,10 +955,16 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             EfficientAttention,
             LAWDS,
             SEAttention,
-            FocalModulation
+            FocalModulation,
         }:
             c2 = ch[f]
             args = [c2, *args]
+        # ECA Attention Module
+        elif m is ECAAttention:
+            c1, c2 = ch[f], args[0]
+            if c2 != nc:
+                c2 = make_divisible(min(c2, max_channels) * width, 8)
+            args = [c1, *args[1:]]
         # END OF ATTENTION MODULE
 
         # Context Guided Block

@@ -72,7 +72,8 @@ from .attention import (
     BiLevelRoutingAttention,
     BiLevelRoutingAttention_nchw,
     EfficientAttention,
-    SEAttention
+    SEAttention,
+    ECAAttention
 )
 
 from .head import Classify, Detect, Pose, RTDETRDecoder, Segment
@@ -153,5 +154,6 @@ __all__ = (
     "C2f_EMSCP",
     "LAWDS",
     "SEAttention",
-    "RCSOSA"
+    "RCSOSA",
+    "ECAAttention"
 )
