@@ -54,6 +54,8 @@ from ultralytics.nn.modules import (
     C2f_EMSC,
     C2f_EMSCP,
     LAWDS,
+    SEAttention,
+    RCSOSA,
 )
 from ultralytics.utils import (
     DEFAULT_CFG_DICT,
@@ -901,6 +903,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             C2f_CloAtt,
             C2f_EMSC,
             C2f_EMSCP,
+            RCSOSA,
         ):
             c1, c2 = ch[f], args[0]
             if (
@@ -929,6 +932,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 C2f_CloAtt,
                 C2f_EMSC,
                 C2f_EMSCP,
+                RCSOSA,
             ):
                 args.insert(2, n)  # number of repeats
                 n = 1
@@ -948,6 +952,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             BiLevelRoutingAttention_nchw,
             EfficientAttention,
             LAWDS,
+            SEAttention,
         }:
             c2 = ch[f]
             args = [c2, *args]

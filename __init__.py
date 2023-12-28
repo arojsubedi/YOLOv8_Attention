@@ -46,7 +46,8 @@ from .block import (
     ContextGuidedBlock_Down,
     C2f_EMSC,
     C2f_EMSCP,
-    LAWDS
+    LAWDS,
+    RCSOSA
 )
 
 from .conv import (
@@ -71,6 +72,7 @@ from .attention import (
     BiLevelRoutingAttention,
     BiLevelRoutingAttention_nchw,
     EfficientAttention,
+    SEAttention
 )
 
 from .head import Classify, Detect, Pose, RTDETRDecoder, Segment
@@ -149,5 +151,7 @@ __all__ = (
     "ContextGuidedBlock_Down",
     "C2f_EMSC",
     "C2f_EMSCP",
-    "LAWDS"
+    "LAWDS",
+    "SEAttention",
+    "RCSOSA"
 )
