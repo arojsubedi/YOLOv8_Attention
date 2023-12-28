@@ -52,7 +52,8 @@ from ultralytics.nn.modules import (
     C2f_CloAtt,
     ContextGuidedBlock_Down,
     C2f_EMSC,
-    C2f_EMSCP
+    C2f_EMSCP,
+    LAWDS,
 )
 from ultralytics.utils import (
     DEFAULT_CFG_DICT,
@@ -305,7 +306,7 @@ class DetectionModel(BaseModel):
     """YOLOv8 detection model."""
 
     def __init__(
-        self, cfg="yolov8n.yaml", ch=3, nc=None, verbose=True
+        self, cfg="yolov8s.yaml", ch=3, nc=None, verbose=True
     ):  # model, input channels, number of classes
         """Initialize the YOLOv8 detection model with the given config and parameters."""
         super().__init__()
@@ -899,7 +900,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             C2f_DySnakeConv,
             C2f_CloAtt,
             C2f_EMSC,
-            C2f_EMSCP
+            C2f_EMSCP,
         ):
             c1, c2 = ch[f], args[0]
             if (
@@ -927,7 +928,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 C2f_DySnakeConv,
                 C2f_CloAtt,
                 C2f_EMSC,
-                C2f_EMSCP
+                C2f_EMSCP,
             ):
                 args.insert(2, n)  # number of repeats
                 n = 1
@@ -946,6 +947,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             BiLevelRoutingAttention,
             BiLevelRoutingAttention_nchw,
             EfficientAttention,
+            LAWDS,
         }:
             c2 = ch[f]
             args = [c2, *args]

@@ -46,6 +46,7 @@ from .block import (
     ContextGuidedBlock_Down,
     C2f_EMSC,
     C2f_EMSCP,
+    LAWDS
 )
 
 from .conv import (
@@ -148,4 +149,5 @@ __all__ = (
     "ContextGuidedBlock_Down",
     "C2f_EMSC",
     "C2f_EMSCP",
+    "LAWDS"
 )
