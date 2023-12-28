@@ -56,6 +56,7 @@ from ultralytics.nn.modules import (
     LAWDS,
     SEAttention,
     RCSOSA,
+    FocalModulation
 )
 from ultralytics.utils import (
     DEFAULT_CFG_DICT,
@@ -953,6 +954,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             EfficientAttention,
             LAWDS,
             SEAttention,
+            FocalModulation
         }:
             c2 = ch[f]
             args = [c2, *args]
