@@ -48,6 +48,7 @@ from .block import (
     C2f_EMSCP,
     LAWDS,
     RCSOSA,
+    FocalModulation
 )
 
 from .conv import (
@@ -158,4 +159,5 @@ __all__ = (
     "RCSOSA",
     "ECAAttention",
     "GAM_Attention",
+    "FocalModulation"
 )
