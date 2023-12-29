@@ -47,7 +47,7 @@ from .block import (
     C2f_EMSC,
     C2f_EMSCP,
     LAWDS,
-    RCSOSA
+    RCSOSA,
 )
 
 from .conv import (
@@ -73,7 +73,8 @@ from .attention import (
     BiLevelRoutingAttention_nchw,
     EfficientAttention,
     SEAttention,
-    ECAAttention
+    ECAAttention,
+    GAM_Attention,
 )
 
 from .head import Classify, Detect, Pose, RTDETRDecoder, Segment
@@ -155,5 +156,6 @@ __all__ = (
     "LAWDS",
     "SEAttention",
     "RCSOSA",
-    "ECAAttention"
+    "ECAAttention",
+    "GAM_Attention",
 )
