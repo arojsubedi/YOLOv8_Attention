@@ -49,7 +49,7 @@ from .block import (
     LAWDS,
     RCSOSA,
     FocalModulation,
-    GlobalContext
+    GlobalContext,
 )
 
 from .conv import (
@@ -77,7 +77,8 @@ from .attention import (
     SEAttention,
     ECAAttention,
     GAM_Attention,
-    GCT
+    GCT,
+    GatherExcite,
 )
 
 from .head import Classify, Detect, Pose, RTDETRDecoder, Segment
@@ -163,5 +164,6 @@ __all__ = (
     "GAM_Attention",
     "FocalModulation",
     "GCT",
-    "GlobalContext"
+    "GlobalContext",
+    "GatherExcite",
 )
