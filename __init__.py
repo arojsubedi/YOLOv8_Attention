@@ -79,6 +79,7 @@ from .attention import (
     GAM_Attention,
     GCT,
     GatherExcite,
+    MHSA
 )
 
 from .head import Classify, Detect, Pose, RTDETRDecoder, Segment
@@ -166,4 +167,5 @@ __all__ = (
     "GCT",
     "GlobalContext",
     "GatherExcite",
+    "MHSA"
 )
