@@ -50,6 +50,7 @@ from .block import (
     RCSOSA,
     FocalModulation,
     GlobalContext,
+    ResBlock_CBAM,
 )
 
 from .conv import (
@@ -79,7 +80,7 @@ from .attention import (
     GAM_Attention,
     GCT,
     GatherExcite,
-    MHSA
+    MHSA,
 )
 
 from .head import Classify, Detect, Pose, RTDETRDecoder, Segment
@@ -167,5 +168,6 @@ __all__ = (
     "GCT",
     "GlobalContext",
     "GatherExcite",
-    "MHSA"
+    "MHSA",
+    "ResBlock_CBAM",
 )

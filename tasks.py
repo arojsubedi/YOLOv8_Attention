@@ -62,7 +62,8 @@ from ultralytics.nn.modules import (
     GCT,
     GlobalContext,
     GatherExcite,
-    MHSA
+    MHSA,
+    ResBlock_CBAM,
 )
 from ultralytics.utils import (
     DEFAULT_CFG_DICT,
@@ -914,7 +915,8 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             GAM_Attention,
             GCT,
             GlobalContext,
-            GatherExcite
+            GatherExcite,
+            ResBlock_CBAM,
         ):
             c1, c2 = ch[f], args[0]
             if (
@@ -974,10 +976,10 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             if c2 != nc:
                 c2 = make_divisible(min(c2, max_channels) * width, 8)
             args = [c1, *args[1:]]
-        
+
         # MHSA Attention Module
         elif m in {MHSA}:
-            args=[ch[f],*args]
+            args = [ch[f], *args]
         # END OF ATTENTION MODULE
 
         # Context Guided Block
