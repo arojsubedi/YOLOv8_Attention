@@ -81,6 +81,7 @@ from .attention import (
     GCT,
     GatherExcite,
     MHSA,
+    ShuffleAttention
 )
 
 from .head import Classify, Detect, Pose, RTDETRDecoder, Segment
@@ -170,4 +171,5 @@ __all__ = (
     "GatherExcite",
     "MHSA",
     "ResBlock_CBAM",
+    "ShuffleAttention"
 )
