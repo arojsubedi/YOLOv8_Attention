@@ -76,6 +76,7 @@ from .attention import (
     SEAttention,
     ECAAttention,
     GAM_Attention,
+    GCT
 )
 
 from .head import Classify, Detect, Pose, RTDETRDecoder, Segment
@@ -159,5 +160,6 @@ __all__ = (
     "RCSOSA",
     "ECAAttention",
     "GAM_Attention",
-    "FocalModulation"
+    "FocalModulation",
+    "GCT"
 )

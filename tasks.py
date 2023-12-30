@@ -59,6 +59,7 @@ from ultralytics.nn.modules import (
     FocalModulation,
     ECAAttention,
     GAM_Attention,
+    GCT,
 )
 from ultralytics.utils import (
     DEFAULT_CFG_DICT,
@@ -908,6 +909,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             C2f_EMSCP,
             RCSOSA,
             GAM_Attention,
+            GCT,
         ):
             c1, c2 = ch[f], args[0]
             if (
