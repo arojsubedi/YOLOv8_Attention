@@ -48,7 +48,8 @@ from .block import (
     C2f_EMSCP,
     LAWDS,
     RCSOSA,
-    FocalModulation
+    FocalModulation,
+    GlobalContext
 )
 
 from .conv import (
@@ -161,5 +162,6 @@ __all__ = (
     "ECAAttention",
     "GAM_Attention",
     "FocalModulation",
-    "GCT"
+    "GCT",
+    "GlobalContext"
 )

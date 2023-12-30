@@ -60,6 +60,7 @@ from ultralytics.nn.modules import (
     ECAAttention,
     GAM_Attention,
     GCT,
+    GlobalContext,
 )
 from ultralytics.utils import (
     DEFAULT_CFG_DICT,
@@ -910,6 +911,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             RCSOSA,
             GAM_Attention,
             GCT,
+            GlobalContext,
         ):
             c1, c2 = ch[f], args[0]
             if (
