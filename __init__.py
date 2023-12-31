@@ -52,7 +52,8 @@ from .block import (
     GlobalContext,
     ResBlock_CBAM,
     Fusion,
-    C2f_Faster_EMA
+    C2f_Faster_EMA,
+    C2f_ODConv
 )
 
 from .conv import (
@@ -177,5 +178,6 @@ __all__ = (
     "ShuffleAttention",
     "Fusion",
     "EMA",
-    "C2f_Faster_EMA"
+    "C2f_Faster_EMA",
+    "C2f_ODConv"
 )

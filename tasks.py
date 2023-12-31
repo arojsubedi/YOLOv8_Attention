@@ -68,6 +68,7 @@ from ultralytics.nn.modules import (
     Fusion,
     EMA,
     C2f_Faster_EMA,
+    C2f_ODConv
 )
 from ultralytics.utils import (
     DEFAULT_CFG_DICT,
@@ -939,6 +940,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             GatherExcite,
             ResBlock_CBAM,
             C2f_Faster_EMA,
+            C2f_ODConv
         ):
             if args[0] == "head_channel":
                 args[0] = d[args[0]]
@@ -971,6 +973,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 C2f_EMSCP,
                 RCSOSA,
                 C2f_Faster_EMA,
+                C2f_ODConv
             ):
                 args.insert(2, n)  # number of repeats
                 n = 1
