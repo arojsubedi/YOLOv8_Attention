@@ -51,7 +51,8 @@ from .block import (
     FocalModulation,
     GlobalContext,
     ResBlock_CBAM,
-    Fusion
+    Fusion,
+    C2f_Faster_EMA
 )
 
 from .conv import (
@@ -82,7 +83,8 @@ from .attention import (
     GCT,
     GatherExcite,
     MHSA,
-    ShuffleAttention
+    ShuffleAttention,
+    EMA
 )
 
 from .head import Classify, Detect, Pose, RTDETRDecoder, Segment
@@ -173,5 +175,7 @@ __all__ = (
     "MHSA",
     "ResBlock_CBAM",
     "ShuffleAttention",
-    "Fusion"
+    "Fusion",
+    "EMA",
+    "C2f_Faster_EMA"
 )

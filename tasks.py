@@ -65,7 +65,9 @@ from ultralytics.nn.modules import (
     MHSA,
     ResBlock_CBAM,
     ShuffleAttention,
-    Fusion
+    Fusion,
+    EMA,
+    C2f_Faster_EMA,
 )
 from ultralytics.utils import (
     DEFAULT_CFG_DICT,
@@ -936,6 +938,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             GlobalContext,
             GatherExcite,
             ResBlock_CBAM,
+            C2f_Faster_EMA,
         ):
             if args[0] == "head_channel":
                 args[0] = d[args[0]]
@@ -967,6 +970,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 C2f_EMSC,
                 C2f_EMSCP,
                 RCSOSA,
+                C2f_Faster_EMA,
             ):
                 args.insert(2, n)  # number of repeats
                 n = 1
@@ -974,7 +978,9 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             args = [ch[f], *args]
         elif m is Fusion:
             args[0] = d[args[0]]
-            c1, c2 = [ch[x] for x in f], (sum([ch[x] for x in f]) if args[0] == 'concat' else ch[f[0]])
+            c1, c2 = [ch[x] for x in f], (
+                sum([ch[x] for x in f]) if args[0] == "concat" else ch[f[0]]
+            )
             args = [c1, args[0]]
 
         # Attention Module
@@ -986,6 +992,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
 
         # BiLevelRouting Attention Module
         elif m in {
+            EMA,
             BiLevelRoutingAttention,
             BiLevelRoutingAttention_nchw,
             EfficientAttention,
