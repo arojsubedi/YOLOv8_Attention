@@ -65,6 +65,7 @@ from ultralytics.nn.modules import (
     MHSA,
     ResBlock_CBAM,
     ShuffleAttention,
+    Fusion
 )
 from ultralytics.utils import (
     DEFAULT_CFG_DICT,
@@ -875,9 +876,26 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
     ):  # from, number, module, args
         m = getattr(torch.nn, m[3:]) if "nn." in m else globals()[m]  # get module
         for j, a in enumerate(args):
+            try:
+                if m == "node_mode":
+                    m = d[m]
+                    if len(args) > 0:
+                        if args[0] == "head_channel":
+                            args[0] = int(d[args[0]])
+                t = m
+                m = (
+                    getattr(torch.nn, m[3:]) if "nn." in m else globals()[m]
+                )  # get module
+            except:
+                pass
+
+        for j, a in enumerate(args):
             if isinstance(a, str):
                 with contextlib.suppress(ValueError):
-                    args[j] = locals()[a] if a in locals() else ast.literal_eval(a)
+                    try:
+                        args[j] = locals()[a] if a in locals() else ast.literal_eval(a)
+                    except:
+                        args[j] = a
 
         n = n_ = max(round(n * depth), 1) if n > 1 else n  # depth gain
         if m in (
@@ -919,6 +937,8 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             GatherExcite,
             ResBlock_CBAM,
         ):
+            if args[0] == "head_channel":
+                args[0] = d[args[0]]
             c1, c2 = ch[f], args[0]
             if (
                 c2 != nc
@@ -952,6 +972,10 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 n = 1
         elif m is AIFI:
             args = [ch[f], *args]
+        elif m is Fusion:
+            args[0] = d[args[0]]
+            c1, c2 = [ch[x] for x in f], (sum([ch[x] for x in f]) if args[0] == 'concat' else ch[f[0]])
+            args = [c1, args[0]]
 
         # Attention Module
         # START

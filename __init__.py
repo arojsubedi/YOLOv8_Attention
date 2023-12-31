@@ -51,6 +51,7 @@ from .block import (
     FocalModulation,
     GlobalContext,
     ResBlock_CBAM,
+    Fusion
 )
 
 from .conv import (
@@ -171,5 +172,6 @@ __all__ = (
     "GatherExcite",
     "MHSA",
     "ResBlock_CBAM",
-    "ShuffleAttention"
+    "ShuffleAttention",
+    "Fusion"
 )
