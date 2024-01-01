@@ -68,7 +68,7 @@ from ultralytics.nn.modules import (
     Fusion,
     EMA,
     C2f_Faster_EMA,
-    C2f_ODConv
+    C2f_ODConv,
 )
 from ultralytics.utils import (
     DEFAULT_CFG_DICT,
@@ -877,20 +877,16 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
     for i, (f, n, m, args) in enumerate(
         d["backbone"] + d["head"]
     ):  # from, number, module, args
-        m = getattr(torch.nn, m[3:]) if "nn." in m else globals()[m]  # get module
-        for j, a in enumerate(args):
-            try:
-                if m == "node_mode":
-                    m = d[m]
-                    if len(args) > 0:
-                        if args[0] == "head_channel":
-                            args[0] = int(d[args[0]])
-                t = m
-                m = (
-                    getattr(torch.nn, m[3:]) if "nn." in m else globals()[m]
-                )  # get module
-            except:
-                pass
+        try:
+            if m == "node_mode":
+                m = d[m]
+                if len(args) > 0:
+                    if args[0] == "head_channel":
+                        args[0] = int(d[args[0]])
+            t = m
+            m = getattr(torch.nn, m[3:]) if "nn." in m else globals()[m]  # get module
+        except:
+            pass
 
         for j, a in enumerate(args):
             if isinstance(a, str):
@@ -940,7 +936,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             GatherExcite,
             ResBlock_CBAM,
             C2f_Faster_EMA,
-            C2f_ODConv
+            C2f_ODConv,
         ):
             if args[0] == "head_channel":
                 args[0] = d[args[0]]
@@ -973,7 +969,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 C2f_EMSCP,
                 RCSOSA,
                 C2f_Faster_EMA,
-                C2f_ODConv
+                C2f_ODConv,
             ):
                 args.insert(2, n)  # number of repeats
                 n = 1
