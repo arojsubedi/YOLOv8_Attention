@@ -69,6 +69,7 @@ from ultralytics.nn.modules import (
     EMA,
     C2f_Faster_EMA,
     C2f_ODConv,
+    C2f_DCF
 )
 from ultralytics.utils import (
     DEFAULT_CFG_DICT,
@@ -912,6 +913,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
             C1,
             C2,
             C2f,
+            C2f_DCF,
             C3,
             C3TR,
             C3Ghost,
@@ -952,6 +954,7 @@ def parse_model(d, ch, verbose=True):  # model_dict, input_channels(3)
                 C1,
                 C2,
                 C2f,
+                C2f_DCF,
                 C3,
                 C3TR,
                 C3Ghost,

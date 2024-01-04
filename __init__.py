@@ -53,7 +53,8 @@ from .block import (
     ResBlock_CBAM,
     Fusion,
     C2f_Faster_EMA,
-    C2f_ODConv
+    C2f_ODConv,
+    C2f_DCF
 )
 
 from .conv import (
@@ -179,5 +180,6 @@ __all__ = (
     "Fusion",
     "EMA",
     "C2f_Faster_EMA",
-    "C2f_ODConv"
+    "C2f_ODConv",
+    "C2f_DCF"
 )

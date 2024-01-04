@@ -53,7 +53,8 @@ __all__ = (
     "ResBlock_CBAM",
     "Fusion",
     "C2f_Faster_EMA",
-    "C2f_ODConv"
+    "C2f_ODConv",
+    "C2f_DCF"
 )
 
 
@@ -2289,85 +2290,94 @@ class ResBlock_CBAM(nn.Module):
 
 
 ######################################## ResBlock CBAM End ########################################
-    
+
 ######################################## BIFPN begin ########################################
 
+
 class Fusion(nn.Module):
-    def __init__(self, inc_list, fusion='bifpn') -> None:
+    def __init__(self, inc_list, fusion="bifpn") -> None:
         super().__init__()
-        
-        assert fusion in ['weight', 'adaptive', 'concat', 'bifpn']
+
+        assert fusion in ["weight", "adaptive", "concat", "bifpn"]
         self.fusion = fusion
-        
-        if self.fusion == 'bifpn':
-            self.fusion_weight = nn.Parameter(torch.ones(len(inc_list), dtype=torch.float32), requires_grad=True)
+
+        if self.fusion == "bifpn":
+            self.fusion_weight = nn.Parameter(
+                torch.ones(len(inc_list), dtype=torch.float32), requires_grad=True
+            )
             self.relu = nn.ReLU()
             self.epsilon = 1e-4
         else:
             self.fusion_conv = nn.ModuleList([Conv(inc, inc, 1) for inc in inc_list])
 
-            if self.fusion == 'adaptive':
+            if self.fusion == "adaptive":
                 self.fusion_adaptive = Conv(sum(inc_list), len(inc_list), 1)
-    
+
     def forward(self, x):
-        if self.fusion in ['weight', 'adaptive']:
+        if self.fusion in ["weight", "adaptive"]:
             for i in range(len(x)):
                 x[i] = self.fusion_conv[i](x[i])
-        if self.fusion == 'weight':
+        if self.fusion == "weight":
             return torch.sum(torch.stack(x, dim=0), dim=0)
-        elif self.fusion == 'adaptive':
+        elif self.fusion == "adaptive":
             fusion = torch.softmax(self.fusion_adaptive(torch.cat(x, dim=1)), dim=1)
             x_weight = torch.split(fusion, [1] * len(x), dim=1)
-            return torch.sum(torch.stack([x_weight[i] * x[i] for i in range(len(x))], dim=0), dim=0)
-        elif self.fusion == 'concat':
+            return torch.sum(
+                torch.stack([x_weight[i] * x[i] for i in range(len(x))], dim=0), dim=0
+            )
+        elif self.fusion == "concat":
             return torch.cat(x, dim=1)
-        elif self.fusion == 'bifpn':
+        elif self.fusion == "bifpn":
             fusion_weight = self.relu(self.fusion_weight.clone())
             fusion_weight = fusion_weight / (torch.sum(fusion_weight, dim=0))
-            return torch.sum(torch.stack([fusion_weight[i] * x[i] for i in range(len(x))], dim=0), dim=0)
+            return torch.sum(
+                torch.stack([fusion_weight[i] * x[i] for i in range(len(x))], dim=0),
+                dim=0,
+            )
+
 
 ######################################## BIFPN end ########################################
 
 ######################################## C2f-Faster-EMA begin ########################################
 
+
 class Faster_Block_EMA(nn.Module):
-    def __init__(self,
-                 inc,
-                 dim,
-                 n_div=4,
-                 mlp_ratio=2,
-                 drop_path=0.1,
-                 layer_scale_init_value=0.0,
-                 pconv_fw_type='split_cat'
-                 ):
+    def __init__(
+        self,
+        inc,
+        dim,
+        n_div=4,
+        mlp_ratio=2,
+        drop_path=0.1,
+        layer_scale_init_value=0.0,
+        pconv_fw_type="split_cat",
+    ):
         super().__init__()
         self.dim = dim
         self.mlp_ratio = mlp_ratio
-        self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+        self.drop_path = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
         self.n_div = n_div
 
         mlp_hidden_dim = int(dim * mlp_ratio)
 
         mlp_layer = [
             Conv(dim, mlp_hidden_dim, 1),
-            nn.Conv2d(mlp_hidden_dim, dim, 1, bias=False)
+            nn.Conv2d(mlp_hidden_dim, dim, 1, bias=False),
         ]
 
         self.mlp = nn.Sequential(*mlp_layer)
 
-        self.spatial_mixing = Partial_conv3(
-            dim,
-            n_div,
-            pconv_fw_type
-        )
+        self.spatial_mixing = Partial_conv3(dim, n_div, pconv_fw_type)
         self.attention = EMA(dim)
-        
+
         self.adjust_channel = None
         if inc != dim:
             self.adjust_channel = Conv(inc, dim, 1)
 
         if layer_scale_init_value > 0:
-            self.layer_scale = nn.Parameter(layer_scale_init_value * torch.ones((dim)), requires_grad=True)
+            self.layer_scale = nn.Parameter(
+                layer_scale_init_value * torch.ones((dim)), requires_grad=True
+            )
             self.forward = self.forward_layer_scale
         else:
             self.forward = self.forward
@@ -2383,8 +2393,11 @@ class Faster_Block_EMA(nn.Module):
     def forward_layer_scale(self, x):
         shortcut = x
         x = self.spatial_mixing(x)
-        x = shortcut + self.drop_path(self.layer_scale.unsqueeze(-1).unsqueeze(-1) * self.mlp(x))
+        x = shortcut + self.drop_path(
+            self.layer_scale.unsqueeze(-1).unsqueeze(-1) * self.mlp(x)
+        )
         return x
+
 
 class C3_Faster_EMA(C3):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
@@ -2392,14 +2405,17 @@ class C3_Faster_EMA(C3):
         c_ = int(c2 * e)  # hidden channels
         self.m = nn.Sequential(*(Faster_Block_EMA(c_, c_) for _ in range(n)))
 
+
 class C2f_Faster_EMA(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         self.m = nn.ModuleList(Faster_Block_EMA(self.c, self.c) for _ in range(n))
 
+
 ######################################## C2f-Faster-EMA end ########################################
 
 ######################################## C2f-OdConv begin ########################################
+
 
 def fuse_conv_bn(conv, bn):
     # Fuse convolution and batchnorm layers https://tehnokv.com/posts/fusing-batchnorm-and-conv/
@@ -2434,8 +2450,18 @@ def fuse_conv_bn(conv, bn):
     fusedconv.bias.copy_(torch.mm(w_bn, b_conv.reshape(-1, 1)).reshape(-1) + b_bn)
     return fusedconv
 
+
 class Attention(nn.Module):
-    def __init__(self, in_planes, out_planes, kernel_size, groups=1, reduction=0.0625, kernel_num=4, min_channel=16):
+    def __init__(
+        self,
+        in_planes,
+        out_planes,
+        kernel_size,
+        groups=1,
+        reduction=0.0625,
+        kernel_num=4,
+        min_channel=16,
+    ):
         super(Attention, self).__init__()
         attention_channel = max(int(in_planes * reduction), min_channel)
         self.kernel_size = kernel_size
@@ -2459,7 +2485,9 @@ class Attention(nn.Module):
         if kernel_size == 1:  # point-wise convolution
             self.func_spatial = self.skip
         else:
-            self.spatial_fc = nn.Conv2d(attention_channel, kernel_size * kernel_size, 1, bias=True)
+            self.spatial_fc = nn.Conv2d(
+                attention_channel, kernel_size * kernel_size, 1, bias=True
+            )
             self.func_spatial = self.get_spatial_attention
 
         if kernel_num == 1:
@@ -2473,7 +2501,7 @@ class Attention(nn.Module):
     def _initialize_weights(self):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
             if isinstance(m, nn.BatchNorm2d):
@@ -2489,15 +2517,21 @@ class Attention(nn.Module):
         return 1.0
 
     def get_channel_attention(self, x):
-        channel_attention = torch.sigmoid(self.channel_fc(x).view(x.size(0), -1, 1, 1) / self.temperature)
+        channel_attention = torch.sigmoid(
+            self.channel_fc(x).view(x.size(0), -1, 1, 1) / self.temperature
+        )
         return channel_attention
 
     def get_filter_attention(self, x):
-        filter_attention = torch.sigmoid(self.filter_fc(x).view(x.size(0), -1, 1, 1) / self.temperature)
+        filter_attention = torch.sigmoid(
+            self.filter_fc(x).view(x.size(0), -1, 1, 1) / self.temperature
+        )
         return filter_attention
 
     def get_spatial_attention(self, x):
-        spatial_attention = self.spatial_fc(x).view(x.size(0), 1, 1, 1, self.kernel_size, self.kernel_size)
+        spatial_attention = self.spatial_fc(x).view(
+            x.size(0), 1, 1, 1, self.kernel_size, self.kernel_size
+        )
         spatial_attention = torch.sigmoid(spatial_attention / self.temperature)
         return spatial_attention
 
@@ -2509,19 +2543,34 @@ class Attention(nn.Module):
     def forward(self, x):
         x = self.avgpool(x)
         x = self.fc(x)
-        if hasattr(self, 'bn'):
+        if hasattr(self, "bn"):
             x = self.bn(x)
         x = self.relu(x)
-        return self.func_channel(x), self.func_filter(x), self.func_spatial(x), self.func_kernel(x)
-    
+        return (
+            self.func_channel(x),
+            self.func_filter(x),
+            self.func_spatial(x),
+            self.func_kernel(x),
+        )
+
     def switch_to_deploy(self):
         self.fc = fuse_conv_bn(self.fc, self.bn)
         del self.bn
 
 
 class ODConv2d(nn.Module):
-    def __init__(self, in_planes, out_planes, kernel_size, stride=1, padding=None, dilation=1, groups=1,
-                 reduction=0.0625, kernel_num=1):
+    def __init__(
+        self,
+        in_planes,
+        out_planes,
+        kernel_size,
+        stride=1,
+        padding=None,
+        dilation=1,
+        groups=1,
+        reduction=0.0625,
+        kernel_num=1,
+    ):
         super(ODConv2d, self).__init__()
         self.in_planes = in_planes
         self.out_planes = out_planes
@@ -2531,10 +2580,20 @@ class ODConv2d(nn.Module):
         self.dilation = dilation
         self.groups = groups
         self.kernel_num = kernel_num
-        self.attention = Attention(in_planes, out_planes, kernel_size, groups=groups,
-                                   reduction=reduction, kernel_num=kernel_num)
-        self.weight = nn.Parameter(torch.randn(kernel_num, out_planes, in_planes//groups, kernel_size, kernel_size),
-                                   requires_grad=True)
+        self.attention = Attention(
+            in_planes,
+            out_planes,
+            kernel_size,
+            groups=groups,
+            reduction=reduction,
+            kernel_num=kernel_num,
+        )
+        self.weight = nn.Parameter(
+            torch.randn(
+                kernel_num, out_planes, in_planes // groups, kernel_size, kernel_size
+            ),
+            requires_grad=True,
+        )
         self._initialize_weights()
 
         if self.kernel_size == 1 and self.kernel_num == 1:
@@ -2544,7 +2603,7 @@ class ODConv2d(nn.Module):
 
     def _initialize_weights(self):
         for i in range(self.kernel_num):
-            nn.init.kaiming_normal_(self.weight[i], mode='fan_out', nonlinearity='relu')
+            nn.init.kaiming_normal_(self.weight[i], mode="fan_out", nonlinearity="relu")
 
     def update_temperature(self, temperature):
         # self.attention.update_temperature(temperature)
@@ -2553,29 +2612,59 @@ class ODConv2d(nn.Module):
     def _forward_impl_common(self, x):
         # Multiplying channel attention (or filter attention) to weights and feature maps are equivalent,
         # while we observe that when using the latter method the models will run faster with less gpu memory cost.
-        channel_attention, filter_attention, spatial_attention, kernel_attention = self.attention(x)
+        (
+            channel_attention,
+            filter_attention,
+            spatial_attention,
+            kernel_attention,
+        ) = self.attention(x)
         batch_size, in_planes, height, width = x.size()
         x = x * channel_attention
         x = x.reshape(1, -1, height, width)
-        aggregate_weight = spatial_attention * kernel_attention * self.weight.unsqueeze(dim=0)
+        aggregate_weight = (
+            spatial_attention * kernel_attention * self.weight.unsqueeze(dim=0)
+        )
         aggregate_weight = torch.sum(aggregate_weight, dim=1).view(
-            [-1, self.in_planes // self.groups, self.kernel_size, self.kernel_size])
-        output = F.conv2d(x, weight=aggregate_weight, bias=None, stride=self.stride, padding=self.padding,
-                          dilation=self.dilation, groups=self.groups * batch_size)
-        output = output.view(batch_size, self.out_planes, output.size(-2), output.size(-1))
+            [-1, self.in_planes // self.groups, self.kernel_size, self.kernel_size]
+        )
+        output = F.conv2d(
+            x,
+            weight=aggregate_weight,
+            bias=None,
+            stride=self.stride,
+            padding=self.padding,
+            dilation=self.dilation,
+            groups=self.groups * batch_size,
+        )
+        output = output.view(
+            batch_size, self.out_planes, output.size(-2), output.size(-1)
+        )
         output = output * filter_attention
         return output
 
     def _forward_impl_pw1x(self, x):
-        channel_attention, filter_attention, spatial_attention, kernel_attention = self.attention(x)
+        (
+            channel_attention,
+            filter_attention,
+            spatial_attention,
+            kernel_attention,
+        ) = self.attention(x)
         x = x * channel_attention
-        output = F.conv2d(x, weight=self.weight.squeeze(dim=0), bias=None, stride=self.stride, padding=self.padding,
-                          dilation=self.dilation, groups=self.groups)
+        output = F.conv2d(
+            x,
+            weight=self.weight.squeeze(dim=0),
+            bias=None,
+            stride=self.stride,
+            padding=self.padding,
+            dilation=self.dilation,
+            groups=self.groups,
+        )
         output = output * filter_attention
         return output
 
     def forward(self, x):
         return self._forward_impl(x)
+
 
 class Bottleneck_ODConv(Bottleneck):
     def __init__(self, c1, c2, shortcut=True, g=1, k=(3, 3), e=0.5):
@@ -2584,15 +2673,64 @@ class Bottleneck_ODConv(Bottleneck):
         self.cv1 = ODConv2d(c1, c_, k[0], 1)
         self.cv2 = ODConv2d(c_, c2, k[1], 1, groups=g)
 
+
 class C3_ODConv(C3):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
         c_ = int(c2 * e)  # hidden channels
-        self.m = nn.Sequential(*(Bottleneck_ODConv(c_, c_, shortcut, g, k=(1, 3), e=1.0) for _ in range(n)))
+        self.m = nn.Sequential(
+            *(Bottleneck_ODConv(c_, c_, shortcut, g, k=(1, 3), e=1.0) for _ in range(n))
+        )
+
 
 class C2f_ODConv(C2f):
     def __init__(self, c1, c2, n=1, shortcut=False, g=1, e=0.5):
         super().__init__(c1, c2, n, shortcut, g, e)
-        self.m = nn.ModuleList(Bottleneck_ODConv(self.c, self.c, shortcut, g, k=(3, 3), e=1.0) for _ in range(n))
+        self.m = nn.ModuleList(
+            Bottleneck_ODConv(self.c, self.c, shortcut, g, k=(3, 3), e=1.0)
+            for _ in range(n)
+        )
+
 
 ######################################## C2f-OdConv end ########################################
+
+
+######################################## C2f-DCF end ########################################
+class C2f_DCF(nn.Module):
+    """CSP Bottleneck with 2 convolutions."""
+
+    def __init__(
+        self, c1, c2, n=1, shortcut=False, g=1, e=0.5
+    ):  # ch_in, ch_out, number, shortcut, groups, expansion
+        super().__init__()
+        self.c = int(c2 * e)  # hidden channels
+        self.cv1 = Conv(c1, 2 * self.c, 1, 1)
+        self.cv2 = Conv((2 + n) * self.c, c2, 1)  # optional act=FReLU(c2)
+        self.m = nn.ModuleList(
+            Bottleneck(self.c, self.c, shortcut, g, k=((3, 3), (3, 3)), e=1.0)
+            for _ in range(n)
+        )
+
+    def forward(self, x):
+        """Forward pass through C2f layer."""
+        y = list(self.cv1(x).chunk(2, 1))
+        input_tensor = y[-1]
+        for m in self.m:
+            output = m(input_tensor)
+            y.append(output)
+            input_tensor = output + input_tensor
+        return self.cv2(torch.cat(y, 1))
+
+    def forward_split(self, x):
+        """Forward pass using split() instead of chunk()."""
+        y = list(self.cv1(x).split((self.c, self.c), 1))
+        input_tensor = y[-1]
+        for m in self.m:
+            output = m(input_tensor)
+            input_tensor = output + input_tensor
+            y.extend(output)
+        # y.extend(m(y[-1]) for m in self.m)
+        return self.cv2(torch.cat(y, 1))
+
+
+######################################## C2f-DCF end ########################################
